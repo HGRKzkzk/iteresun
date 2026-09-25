@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Petrischaal van Zeus — 1024</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="glyph">⚡</span>
+        <div>
+          <h1>Petrischaal van Zeus</h1>
+          <p class="sub">1024 stichters · gesloten genenpoel · godspel</p>
+        </div>
+      </div>
+      <div class="clock">
+        <span id="year">Jaar 0</span>
+        <span id="season">Lente</span>
+      </div>
+    </header>
+
+    <main class="stage">
+      <aside class="panel left">
+        <section>
+          <h2>De schaal</h2>
+          <dl class="stats">
+            <div><dt>Bevolking</dt><dd id="stat-pop">1024</dd></div>
+            <div><dt>Levend</dt><dd id="stat-alive">1024</dd></div>
+            <div><dt>Vruchtbaar</dt><dd id="stat-fertile">—</dd></div>
+            <div><dt>Gem. leeftijd</dt><dd id="stat-age">—</dd></div>
+          </dl>
+        </section>
+        <section>
+          <h2>Genetica</h2>
+          <dl class="stats">
+            <div><dt>Diversiteit</dt><dd id="stat-div">100%</dd></div>
+            <div><dt>Gem. inteelt F</dt><dd id="stat-f">0.000</dd></div>
+            <div><dt>Risico</dt><dd id="stat-risk">laag</dd></div>
+            <div><dt>Unieke lijnen</dt><dd id="stat-lines">1024</dd></div>
+          </dl>
+          <div class="meter">
+            <label>Genenpoel</label>
+            <div class="bar"><i id="bar-div"></i></div>
+          </div>
+          <div class="meter warn">
+            <label>Inteeltdruk</label>
+            <div class="bar"><i id="bar-f"></i></div>
+          </div>
+        </section>
+        <section>
+          <h2>Geselecteerd</h2>
+          <div id="inspect" class="inspect empty">Klik een sterveling in de schaal.</div>
+        </section>
+      </aside>
+
+      <div class="dish-wrap">
+        <canvas id="dish" width="900" height="900"></canvas>
+        <div class="dish-label">Κρατήρ · 1024</div>
+      </div>
+
+      <aside class="panel right">
+        <section>
+          <h2>Goddelijke wil</h2>
+          <p class="hint">Je bent geen tiran van elk huwelijk. Je duwt het lot.</p>
+          <div class="powers">
+            <button data-power="pause" id="btn-pause">⏸ Pauze</button>
+            <button data-power="speed">⏩ Versnel</button>
+            <button data-power="bless">✦ Zegen vruchtbaarheid</button>
+            <button data-power="pair">⚭ Schik een paar</button>
+            <button data-power="famine">☠ Hongerjaar</button>
+            <button data-power="plague">🌫 Koorts</button>
+            <button data-power="exile">↗ Verbannen</button>
+            <button data-power="reveal">👁 Toon verwantschap</button>
+          </div>
+        </section>
+        <section>
+          <h2>Logboek van de Olympos</h2>
+          <ol id="log" class="log"></ol>
+        </section>
+        <section>
+          <h2>Doel</h2>
+          <p class="lore">
+            Houd de 1024-lijn in leven zonder dat de schaal ineenstort.
+            Diversiteit boven 40%, inteelt F onder 0.12, bevolking niet onder 200.
+            Honderd jaar is een eeuw. Duizend jaar is een mythe.
+          </p>
+        </section>
+      </aside>
+    </main>
+  </div>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
