@@ -15,11 +15,11 @@ export class World {
     this.speed = 1; this.paused = false; this.selected = null; this.showKin = false;
     this.log = []; this.stats = {}; this.event = null; this.ended = null;
     this.peakAlive = 1024; this.lostAlleles = 0; this.prevAlleles = 0;
-    this.birthsDecade = 0; this.deathsDecade = 0; this.nextOmenAt = 22;
+    this.birthsDecade = 0; this.deathsDecade = 0;
     this.ageName = "De eerste adem"; this.law = { ...DEFAULTS }; this.revisions = 0;
-    this.byId = new Map(); this.houseCount = {};
+    this.byId = new Map(); this.houseCount = {}; this.schools = [];
     this.seedFounders(); this.recompute(); this.prevAlleles = this.stats.lines;
-    this.note("De schaal heeft een vorm. Jij zegt wat die vorm ís.");
+    this.note("Het volk leeft. Jij wacht op een denker.");
   }
   rand() { return this.rng(); }
   pick(arr) { return arr[Math.floor(this.rand() * arr.length)]; }
@@ -27,7 +27,52 @@ export class World {
     if (this.ended || !LAWS[key] || !LAWS[key].options[value]) return;
     if (this.law[key] === value) return;
     this.law[key] = value; this.revisions++;
-    this.note(`Wet herschreven: ${LAWS[key].label} → ${LAWS[key].options[value]}`);
+    this.note(`Het volk neemt aan: ${LAWS[key].label} → ${LAWS[key].options[value]}`);
+  }
+  pressedAxis() {
+    if (this.stats.F > 0.07) return this.rand() < 0.5 ? "kin" : "who";
+    if (this.stats.alive > 1400) return this.rand() < 0.5 ? "fruit" : "end";
+    if ((this.stats.houses || 12) < 8) return "house";
+    if (this.stats.diversity < 0.45) return "who";
+    return this.pick(Object.keys(LAWS));
+  }
+  teach(child, key, value) {
+    if (!child || !LAWS[key]) return;
+    child.philosopher = true; child.thesis = { key, value };
+    this.schools.push({ key, value, id: child.id, year: this.year, weight: 3 });
+    this.note(`${child.name} spreekt: ${LAWS[key].options[value]}`);
+  }
+  driftEthos() {
+    if (!this.schools.length) return;
+    const score = {};
+    for (const s of this.schools) {
+      const p = this.byId.get(s.id);
+      let w = s.weight;
+      w *= p && p.alive ? 2 : Math.max(0.15, 1 - (this.year - s.year) / 80);
+      const k = s.key + "::" + s.value;
+      score[k] = (score[k] || 0) + w;
+    }
+    const byAxis = {};
+    for (const [k, w] of Object.entries(score)) {
+      const [axis, val] = k.split("::");
+      if (!byAxis[axis] || w > byAxis[axis].w) byAxis[axis] = { val, w };
+    }
+    for (const [axis, best] of Object.entries(byAxis)) if (best.w >= 2.5) this.setLaw(axis, best.val);
+  }
+  maybePhilosopher(child) {
+    let p = 0.006;
+    if (this.stats.F > 0.06) p += 0.01;
+    if (this.stats.diversity < 0.5) p += 0.008;
+    if (this.stats.alive < 300) p += 0.01;
+    if (this.year < 8) p *= 0.35;
+    if (this.rand() > p) return;
+    const axis = this.pressedAxis(), def = LAWS[axis];
+    this.event = {
+      title: `${child.name} wordt geboren als denker`,
+      body: `Geslacht ${child.gen}. Vraag: ${def.label} De leer zakt pas later in het volk.`,
+      choices: Object.entries(def.options).map(([value, label]) => ({ label, run: () => this.teach(child, axis, value) }))
+    };
+    this.paused = true;
   }
   seedFounders() {
     this.people = [];
@@ -39,7 +84,7 @@ export class World {
       const p = { id: this.nextId++, founder: true, sex, age: 16 + Math.floor(this.rand() * 24), genome,
         mother: null, father: null, alive: true,
         x: 0.5 + Math.cos(ang) * r * 0.42, y: 0.5 + Math.sin(ang) * r * 0.42,
-        hue: (i / FOUNDERS) * 360, kids: 0, stem, house: stem, gen: 0, name: stem + " I" };
+        hue: (i / FOUNDERS) * 360, kids: 0, stem, house: stem, gen: 0, name: stem + " I", philosopher: false, thesis: null };
       this.people.push(p); this.byId.set(p.id, p); this.houseCount[stem] = 1;
     }
   }
@@ -80,10 +125,7 @@ export class World {
   }
   inheritIdentity(mother, father, sex) {
     const w = this.law.who;
-    if (w === "breath") {
-      const stem = this.rawStem(sex);
-      return { stem, house: stem, name: stem, hue: (mother.hue + father.hue) / 2 };
-    }
+    if (w === "breath") { const stem = this.rawStem(sex); return { stem, house: stem, name: stem, hue: (mother.hue + father.hue) / 2 }; }
     if (w === "name") {
       const src = this.rand() < 0.5 ? mother : father;
       this.houseCount[src.stem] = (this.houseCount[src.stem] || 0) + 1;
@@ -105,10 +147,7 @@ export class World {
     }
     return s / t;
   }
-  sameHouse(a, b) {
-    const dh = Math.min(Math.abs(a.hue - b.hue), 360 - Math.abs(a.hue - b.hue));
-    return dh < 28;
-  }
+  sameHouse(a, b) { return Math.min(Math.abs(a.hue - b.hue), 360 - Math.abs(a.hue - b.hue)) < 28; }
   tooClose(a, b) {
     if (a.id === b.id) return true;
     if (this.law.kin === "open") return false;
@@ -188,8 +227,7 @@ export class World {
     const fertF = live.filter(p => p.sex === "v" && p.age >= vf && p.age <= vt);
     const fertM = live.filter(p => p.sex === "m" && p.age >= mf && p.age <= mt);
     const cap = this.law.fruit === "plenty" ? 2000 : this.law.fruit === "spare" ? 1200 : 1600;
-    let birthChance = this.birthRate() * (1 - (live.length / cap) * 0.75);
-    let births = 0;
+    let birthChance = this.birthRate() * (1 - (live.length / cap) * 0.75), births = 0;
     for (const mother of fertF) {
       if (this.rand() > birthChance) continue;
       const father = this.chooseFather(mother, fertM); if (!father) continue;
@@ -201,14 +239,18 @@ export class World {
         mother: mother.id, father: father.id, alive: true,
         x: mother.x + (this.rand() - 0.5) * 0.03, y: mother.y + (this.rand() - 0.5) * 0.03,
         hue: ident.hue, kids: 0, stem: ident.stem, house: ident.house,
-        gen: Math.max(mother.gen, father.gen) + 1, name: ident.name };
+        gen: Math.max(mother.gen, father.gen) + 1, name: ident.name, philosopher: false, thesis: null };
+      if (mother.thesis && this.rand() < 0.35) child.thesis = { ...mother.thesis };
+      else if (father.thesis && this.rand() < 0.35) child.thesis = { ...father.thesis };
+      if (child.thesis) this.schools.push({ ...child.thesis, id: child.id, year: this.year, weight: 0.6 });
       mother.kids++; father.kids++; this.people.push(child); this.byId.set(child.id, child); births++;
+      if (!this.event) this.maybePhilosopher(child);
     }
     let deaths = 0;
     for (const p of live) {
       p.age++; let mort = 0.005;
       if (this.law.end === "keep") { if (p.age > 62) mort += (p.age - 62) * 0.008; if (p.age > 88) mort += 0.06; }
-      else if (this.law.end === "yield") { if (p.age > 50) mort += (p.age - 50) * 0.018; mort += this.kinshipF(p) * 0.09; if (p.age < 5 && this.kinshipF(p) > 0.08) mort += 0.06; }
+      else if (this.law.end === "yield") { if (p.age > 50) mort += (p.age - 50) * 0.018; mort += this.kinshipF(p) * 0.09; }
       else { if (p.age > 55) mort += (p.age - 55) * 0.013; if (p.age > 80) mort += 0.09; mort += this.kinshipF(p) * 0.05; }
       if (this.rand() < mort) { p.alive = false; deaths++; }
     }
@@ -218,9 +260,9 @@ export class World {
     this.prevAlleles = this.stats.lines;
     if (this.year % 10 === 0) {
       this.note(`Decennium: +${this.birthsDecade} / −${this.deathsDecade}. F=${this.stats.F.toFixed(3)}`);
-      this.birthsDecade = 0; this.deathsDecade = 0;
+      this.birthsDecade = 0; this.deathsDecade = 0; this.driftEthos();
     }
-    if (this.year === this.nextOmenAt) this.spawnQuestion(); this.judge();
+    this.judge();
   }
   wander() {
     const huddle = this.law.house === "hearth";
@@ -239,22 +281,6 @@ export class World {
     for (const p of this.alive()) { const d = Math.hypot(p.x - nx, p.y - ny); if (d < bd) { bd = d; best = p; } }
     return best;
   }
-  spawnQuestion() {
-    this.nextOmenAt = this.year + 18 + Math.floor(this.rand() * 20);
-    const q = [
-      { title: "Wat telt als te na?", body: "Is alleen de moederschoot bloed, of het hele huis?",
-        choices: [{ label: "Ouder, broer, zus", run: () => this.setLaw("kin", "nuclear") }, { label: "Het huis is verboden", run: () => this.setLaw("kin", "clan") }, { label: "Niets is te na", run: () => this.setLaw("kin", "open") }] },
-      { title: "Wat blijft hetzelfde wezen?", body: "Wat zij niet herinneren, kunnen zij niet mijden.",
-        choices: [{ label: "Alleen dit lichaam", run: () => this.setLaw("who", "breath") }, { label: "De naam", run: () => this.setLaw("who", "name") }, { label: "Het huis", run: () => this.setLaw("who", "house") }, { label: "De stichtersdraad", run: () => this.setLaw("who", "thread") }] },
-      { title: "Moet bloed bijeen blijven?", body: "Eén veld, of een haard per lijn.",
-        choices: [{ label: "Eén veld", run: () => this.setLaw("house", "mix") }, { label: "Huizen van kleur", run: () => this.setLaw("house", "hearth") }] },
-      { title: "Hoe zwaar is een kind?", body: "Dat is wat een leven ís.",
-        choices: [{ label: "Spaarzaam", run: () => this.setLaw("fruit", "spare") }, { label: "De gegeven maat", run: () => this.setLaw("fruit", "given") }, { label: "Overvloed", run: () => this.setLaw("fruit", "plenty") }] },
-      { title: "Wie mag wijken?", body: "Wat is een einde?",
-        choices: [{ label: "Houd de ouden", run: () => this.setLaw("end", "keep") }, { label: "Wie zwak is, wijkt", run: () => this.setLaw("end", "yield") }, { label: "Geen onderscheid", run: () => this.setLaw("end", "equal") }] }
-    ];
-    this.event = this.pick(q); this.paused = true;
-  }
   resolve(index) {
     if (!this.event) return;
     const choice = this.event.choices[index]; if (choice) choice.run();
@@ -265,16 +291,12 @@ export class World {
     if (this.stats.alive < 80) this.ended = { title: "De schaal is leeg", body: this.chronicle("Te weinig stemmen om een volk te heten.") };
     else if (this.stats.F > 0.18) this.ended = { title: "Eén draad", body: this.chronicle("Wat bloed was, is herhaling geworden.") };
     else if (this.stats.diversity < 0.22 && this.year > 30) this.ended = { title: "Eén gezicht", body: this.chronicle("De poel is een spiegel.") };
-    else if (this.year === 100) {
-      this.event = { title: "Einde van de eerste eeuw", body: `100 jaar. ${this.stats.alive} levenden. F=${this.stats.F.toFixed(3)}. ${this.revisions} herschrijvingen.`, choices: [{ label: "De wetten blijven de wereld", run: () => this.note("De tweede eeuw neemt de vorm over.") }] };
-      this.paused = true;
-    } else if (this.year === 250 && this.stats.F < 0.12 && this.stats.alive > 250) {
-      this.ended = { title: "Mythe", body: this.chronicle("De vorm hield. Geen ingreep was nodig."), myth: true };
-    }
+    else if (this.year === 250 && this.stats.F < 0.12 && this.stats.alive > 250)
+      this.ended = { title: "Mythe", body: this.chronicle("Het volk hield zichzelf. Jij gaf alleen denkers."), myth: true };
     if (this.ended) this.paused = true;
   }
   chronicle(reason) {
     const laws = Object.entries(this.law).map(([k, v]) => `${LAWS[k].label} ${LAWS[k].options[v]}`).join("\n");
-    return `${reason}\n\nJaar ${this.year} · ${this.ageName}\nLevend: ${this.stats.alive} (piek ${this.peakAlive})\nInteelt F: ${this.stats.F.toFixed(3)}\nDiversiteit: ${(this.stats.diversity * 100).toFixed(1)}%\nUitgedoofd: ${this.lostAlleles}\nHerschrijvingen: ${this.revisions}\n\n${laws}`;
+    return `${reason}\n\nJaar ${this.year} · ${this.ageName}\nLevend: ${this.stats.alive}\nInteelt F: ${this.stats.F.toFixed(3)}\nDiversiteit: ${(this.stats.diversity * 100).toFixed(1)}%\nDenkers: ${this.schools.filter(s => s.weight >= 3).length}\n\n${laws}`;
   }
 }
