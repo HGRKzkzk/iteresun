@@ -37,6 +37,15 @@ export const LAWS = {
       yield: "Wie zwak is, wijkt. De schaal eist ruimte.",
       equal: "De dood maakt geen onderscheid."
     }
+  },
+  who: {
+    label: "Wat blijft hetzelfde wezen?",
+    options: {
+      breath: "Alleen dit lichaam. Morgen is een ander.",
+      name: "De naam gaat door. Twee geslachten weten elkaar.",
+      house: "Het huis is de persoon. Drie geslachten zijn één.",
+      thread: "De stichtersdraad. Verwantschap reikt tot de oorsprong."
+    }
   }
 };
 
@@ -45,5 +54,6 @@ export const DEFAULTS = {
   house: "mix",
   fruit: "given",
   age: "noon",
-  end: "equal"
+  end: "equal",
+  who: "name"
 };
