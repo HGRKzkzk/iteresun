@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Petrischaal van Zeus — 1024</title>
+  <title>Iteresun — vorm van de schaal</title>
   <link rel="stylesheet" href="css/style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
@@ -12,10 +12,10 @@
   <div id="app">
     <header class="topbar">
       <div class="brand">
-        <span class="glyph">⚡</span>
+        <span class="glyph">◯</span>
         <div>
-          <h1>Petrischaal van Zeus</h1>
-          <p class="sub">1024 stichters · gesloten genenpoel · godspel</p>
+          <h1>Petrischaal</h1>
+          <p class="sub">1024 stichters · geen ingreep · alleen vorm</p>
         </div>
       </div>
       <div class="clock">
@@ -43,42 +43,41 @@
             <div><dt>Risico</dt><dd id="stat-risk">laag</dd></div>
             <div><dt>Unieke lijnen</dt><dd id="stat-lines">1024</dd></div>
             <div><dt>Uitgedoofd</dt><dd id="stat-lost">0</dd></div>
-            <div><dt>Gunst</dt><dd id="stat-favor">⚡⚡⚡⚡⚡⚡⚡</dd></div>
+            <div><dt>Herschrijvingen</dt><dd id="stat-rev">0</dd></div>
           </dl>
           <div class="meter"><label>Genenpoel</label><div class="bar"><i id="bar-div"></i></div></div>
           <div class="meter warn"><label>Inteeltdruk</label><div class="bar"><i id="bar-f"></i></div></div>
         </section>
         <section>
           <h2>Geselecteerd</h2>
-          <div id="inspect" class="inspect empty">Klik een sterveling in de schaal.</div>
+          <div id="inspect" class="inspect empty">Klik iemand. Je verandert geen lot. Alleen de wet.</div>
         </section>
       </aside>
       <div class="dish-wrap">
         <canvas id="dish" width="900" height="900"></canvas>
-        <div class="dish-label">Κρατήρ · 1024</div>
+        <div class="dish-label">μορφή · 1024</div>
       </div>
       <aside class="panel right">
         <section>
-          <h2>Goddelijke wil</h2>
-          <p class="hint">Ingrepen kosten gunst. Orakels stoppen de tijd tot je kiest.</p>
+          <h2>Tijd</h2>
           <div class="powers">
-            <button data-power="pause" id="btn-pause">⏸ Pauze</button>
+            <button data-power="pause">⏸ Pauze</button>
             <button data-power="speed">⏩ Versnel</button>
-            <button data-power="bless">✦ Zegen (2 ⚡)</button>
-            <button data-power="pair">⚭ Schik een paar (1 ⚡)</button>
-            <button data-power="famine">☠ Hongerjaar (1 ⚡)</button>
-            <button data-power="plague">🌫 Koorts (1 ⚡)</button>
-            <button data-power="exile">↗ Verbannen (1 ⚡)</button>
             <button data-power="reveal">👁 Toon verwantschap</button>
           </div>
         </section>
         <section>
-          <h2>Logboek van de Olympos</h2>
+          <h2>Vorm van het zijnde</h2>
+          <p class="hint">Geen zegen, geen plaag. Alleen wat bloed, huis, vrucht en einde zijn.</p>
+          <div id="laws"></div>
+        </section>
+        <section>
+          <h2>Kroniek</h2>
           <ol id="log" class="log"></ol>
         </section>
         <section>
-          <h2>Doel</h2>
-          <p class="lore">Gunst is schaars. De schaal barst bij F > 0.18, sterft onder 80 zielen, of verdwijnt als de genenpoel ineenstort. Jaar 250 met een levende poel is een mythe.</p>
+          <h2>Maat</h2>
+          <p class="lore">De schaal houdt of breekt door de vorm die je haar gaf. F &gt; 0.18, onder 80 zielen, of een lege poel is einde. Jaar 250 in een levende vorm is mythe.</p>
         </section>
       </aside>
     </main>
